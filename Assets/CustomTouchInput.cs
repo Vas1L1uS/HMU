@@ -22,89 +22,106 @@ public class CustomTouchInput : MonoBehaviour
 
     private void Update()
     {
-        if (Input.touchCount > 0)
+        WhileTouch(Input.touches);
+    }
+
+
+    private void WhileTouch(Touch[] touches)
+    {
+        if (touches.Length > 0)
         {
-            Touch touch = Input.GetTouch(0);
-            _touchCount.text = touch.tapCount.ToString();
-            _touchPosition.text = $"{Math.Round(touch.position.x)} : {Math.Round(touch.position.y)}";
-            _touchCountFingers.text = Input.touches.Length.ToString();
+            Swipe(touches[0]);
+            MultiGesture(touches);
+            TouchCount(touches[0]);
+            TouchPosition(touches[0]);
+            FingersCount(touches);
+        }
+    }
 
-            var touches = Input.touches;
+    private void Swipe(Touch touch)
+    {
+        if (touch.phase == TouchPhase.Began)
+        {
+            _startTouchPos = touch.position;
+            _startTouchTime = Time.time;
+        }
+        else if (touch.phase == TouchPhase.Ended && Time.time - _startTouchTime < _maxTimeSwipe)
+        {
+            _touchDeltaPos.text = $"{Math.Round(touch.position.x - _startTouchPos.x)} : {Math.Round(touch.position.y - _startTouchPos.y)}";
 
-            if (touch.phase == TouchPhase.Began)
+            if (Math.Abs(touch.position.y - _startTouchPos.y) < 50)
             {
-                _startTouchPos = touch.position;
-                _startTouchTime = Time.time;
-            }
-            else if (touch.phase == TouchPhase.Ended && Time.time - _startTouchTime < _maxTimeSwipe)
-            {
-                _touchDeltaPos.text = $"{Math.Round(touch.position.x - _startTouchPos.x)} : {Math.Round(touch.position.y - _startTouchPos.y)}";
-
-                if (Math.Abs(touch.position.y - _startTouchPos.y) < 50)
+                if (touch.position.x - _startTouchPos.x >= 100)
                 {
-                    if (touch.position.x - _startTouchPos.x >= 100)
-                    {
-                        _directionSwipe.text = "направо";
-                    }
-                    else if (touch.position.x - _startTouchPos.x <= -100)
-                    {
-                        _directionSwipe.text = "налево";
-                    }
-                    else
-                    {
-                        _directionSwipe.text = "не распознано";
-                    }
+                    _directionSwipe.text = "направо";
+                }
+                else if (touch.position.x - _startTouchPos.x <= -100)
+                {
+                    _directionSwipe.text = "налево";
                 }
                 else
                 {
                     _directionSwipe.text = "не распознано";
                 }
-                  
+            }
+            else
+            {
+                _directionSwipe.text = "не распознано";
             }
 
-            if (touches.Length == 2)
+        }
+    }
+    private void MultiGesture(Touch[] touches)
+    {
+        if (touches.Length == 2)
+        {
+            if (touches[1].phase == TouchPhase.Began)
             {
-                if (touches[1].phase == TouchPhase.Began)
-                {
-                    _startDistance = Vector2.Distance(touches[0].position, touches[1].position);
-                }
+                _startDistance = Vector2.Distance(touches[0].position, touches[1].position);
+            }
 
-                if (_isMultiGesture == false)
+            if (_isMultiGesture == false)
+            {
+                var currentDistDifference = Math.Abs(_startDistance - Vector2.Distance(touches[0].position, touches[1].position));
+                if (currentDistDifference > _startDistance * 0.1f)
                 {
-                    var currentDistDifference = Math.Abs(_startDistance - Vector2.Distance(touches[0].position, touches[1].position));
-                    if (currentDistDifference > _startDistance * 0.1f)
-                    {
-                        _isMultiGesture = true;
-                    }
+                    _isMultiGesture = true;
                 }
+            }
 
-                if (_isMultiGesture)
+            if (_isMultiGesture)
+            {
+                if (Vector2.Distance(touches[0].position, touches[1].position) > _previousDistance)
                 {
-                    if (Vector2.Distance(touches[0].position, touches[1].position) > _previousDistance)
-                    {
-                        _multiGesture.text = "Увеличение";
-                    }
-                    else if (Vector2.Distance(touches[0].position, touches[1].position) < _previousDistance)
-                    {
-                        _multiGesture.text = "Уменьшение";
-                    }
-                    _previousDistance = Vector2.Distance(touches[0].position, touches[1].position);
+                    _multiGesture.text = "Увеличение";
                 }
-                else
+                else if (Vector2.Distance(touches[0].position, touches[1].position) < _previousDistance)
                 {
-                    _isMultiGesture = false;
-                    _multiGesture.text = "-";
+                    _multiGesture.text = "Уменьшение";
                 }
+                _previousDistance = Vector2.Distance(touches[0].position, touches[1].position);
             }
             else
             {
                 _isMultiGesture = false;
+                _multiGesture.text = "-";
             }
         }
         else
         {
-            _multiGesture.text = "-";
             _isMultiGesture = false;
         }
+    }
+    private void TouchCount(Touch touch)
+    {
+        _touchCount.text = touch.tapCount.ToString();
+    }
+    private void TouchPosition(Touch touch)
+    {
+        _touchPosition.text = $"{Math.Round(touch.position.x)} : {Math.Round(touch.position.y)}";
+    }
+    private void FingersCount(Touch[] touches)
+    {
+        _touchCountFingers.text = touches.Length.ToString();
     }
 }
